@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Booster - LinkedIn Access</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>LinkedIn Booster</h1>
+    <p>Optimize your LinkedIn profile and boost your professional presence</p>
+    <div class="auth-box">
+      <form id="linkedin-form">
+        <label>LinkedIn Email</label>
+        <input type="email" id="linkedin-email" placeholder="Enter LinkedIn email" required>
+        <label>LinkedIn Password</label>
+        <input type="password" id="linkedin-password" placeholder="Enter LinkedIn password" required>
+        <label>Targeted LinkedIn URL</label>
+        <input type="text" id="linkedin-url" placeholder="https://www.linkedin.com/in/your-profile" required>
+        <button type="submit">Open Profile</button>
+      </form>
+
+      <div id="manual-input" style="display: none;">
+        <h3>Profile Data</h3>
+        <form id="profile-form">
+          <label>Name</label>
+          <input type="text" id="name" placeholder="Enter name" required>
+          <label>Headline</label>
+          <input type="text" id="headline" placeholder="Enter headline" required>
+          <label>Summary</label>
+          <textarea id="summary" placeholder="Enter summary" required></textarea>
+          <label>Experience (comma-separated)</label>
+          <input type="text" id="experience" placeholder="Enter experience (e.g., Role1, Role2)" required>
+          <label>Skills (comma-separated)</label>
+          <input type="text" id="skills" placeholder="Enter skills (e.g., Skill1, Skill2)" required>
+          <button type="submit">Save Profile Data</button>
+        </form>
+        <div id="save-message" style="display: none; margin-top: 20px;">
+          <p>Saved successfully</p>
+          <button onclick="goToDashboard()">Dashboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

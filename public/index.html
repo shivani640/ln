@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Booster - Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>LinkedIn Booster</h1>
+    <p>Optimize your LinkedIn profile and boost your professional presence</p>
+    <div class="auth-box">
+      <form id="login-form">
+        <label>Username</label>
+        <input type="text" id="username" placeholder="Enter username" required>
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Enter password" required>
+        <button type="submit">Sign In</button>
+        <p>Not a member? <a href="#" onclick="showRegisterForm()">Register</a></p>
+      </form>
+      <form id="register-form" style="display: none;">
+        <label>First Name</label>
+        <input type="text" id="firstName" placeholder="Enter first name" required>
+        <label>Last Name</label>
+        <input type="text" id="lastName" placeholder="Enter last name" required>
+        <label>Email</label>
+        <input type="email" id="email" placeholder="Enter email" required>
+        <label>Username</label>
+        <input type="text" id="reg-username" placeholder="Enter username" required>
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="Enter password" required>
+        <button type="submit">Register</button>
+        <p>Already have an account? <a href="#" onclick="showLoginForm()">Sign In</a></p>
+      </form>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

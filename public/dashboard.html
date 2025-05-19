@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LinkedIn Booster Dashboard</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f6fa;
+      display: flex;
+    }
+
+    aside {
+      width: 250px;
+      background-color: #fff;
+      height: 100vh;
+      border-right: 1px solid #e0e0e0;
+      padding: 20px;
+    }
+
+    aside h2 {
+      font-size: 20px;
+      color: #0077b5;
+      margin-bottom: 10px;
+    }
+
+    aside ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    aside ul li {
+      margin: 10px 0;
+    }
+
+    aside ul li a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    aside ul li a:hover {
+      color: #0077b5;
+    }
+
+    header {
+      background-color: #0077b5;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      font-size: 24px;
+      position: sticky;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .profile-pic {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid white;
+      cursor: pointer;
+    }
+
+    .main {
+      flex: 1;
+      padding: 30px;
+      overflow-y: auto;
+    }
+
+    .user-dashboard {
+      background: white;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .user-dashboard h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #0077b5;
+    }
+
+    .user-dashboard p {
+      margin: 5px 0;
+    }
+
+    .feature {
+      background: white;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      display: none;
+    }
+
+    .feature h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #0077b5;
+    }
+
+    button {
+      background: #0077b5;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #005f91;
+    }
+
+    textarea, input {
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .output {
+      background: #eef6fc;
+      padding: 10px;
+      border: 1px solid #cde;
+      border-radius: 4px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+
+    .download-btn {
+      background: #28a745;
+      margin-left: 10px;
+    }
+
+    .download-btn:hover {
+      background: #218838;
+    }
+
+    .logout {
+      display: block;
+      margin-top: 30px;
+      background-color: #ff4d4d;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+
+    .logout:hover {
+      background-color: #e04343;
+    }
+  </style>
+</head>
+<body>
+
+<aside>
+  <h2>LinkedIn Booster</h2>
+  <ul>
+    <li><a onclick="showFeature(1)">Profile Score Analyzer</a></li>
+    <li><a onclick="showFeature(2)">Keyword Optimization</a></li>
+    <li><a onclick="showFeature(3)">AI-Powered Headline Generator</a></li>
+    <li><a onclick="showFeature(4)">About Section Enhancer</a></li>
+    <li><a onclick="showFeature(5)">Resume-to-LinkedIn Sync</a></li>
+    <li><a onclick="showFeature(6)">Skill Gap Analyzer</a></li>
+    <li><a onclick="showFeature(7)">AI Cover Letter and DM Generator</a></li>
+    <li><a onclick="showFeature(8)">Job Match Score Analyzer</a></li>
+  </ul>
+  <a class="logout" href="index.html">Logout</a>
+</aside>
+
+<div class="main">
+  <header>
+    <span>LinkedIn Optimization Dashboard</span>
+    <input type="file" id="profileImageInput" style="display:none;" accept="image/*">
+    <img src="https://via.placeholder.com/40" alt="Profile Picture" class="profile-pic" id="profilePic" onclick="document.getElementById('profileImageInput').click()">
+  </header>
+
+  <div class="user-dashboard" id="userDashboard">
+    <h2>User Profile</h2>
+    <p><strong>Username:</strong> <span id="userUsername"></span></p>
+    <p><strong>Name:</strong> <span id="userName"></span></p>
+    <p><strong>Headline:</strong> <span id="userHeadline"></span></p>
+    <p><strong>Summary:</strong> <span id="userSummary"></span></p>
+    <p><strong>Experience:</strong> <span id="userExperience"></span></p>
+    <p><strong>Skills:</strong> <span id="userSkills"></span></p>
+  </div>
+
+  <div id="feature1" class="feature">
+    <h2>1. Profile Score Analyzer</h2>
+    <p>Analyzes LinkedIn profile and gives an optimization score (0–100).</p>
+    <button onclick="analyzeProfileScore()">Analyze Profile</button>
+    <div id="scoreOutput" class="output"></div>
+  </div>
+  <div id="feature2" class="feature">
+    <h2>2. Keyword Optimization</h2>
+    <p>Scans LinkedIn headline, summary, and experience for job-specific keywords.</p>
+    <textarea id="jobDescKeywords" rows="4" placeholder="Paste the job description here..."></textarea>
+    <button onclick="optimizeKeywords()">Optimize Keywords</button>
+    <div id="keywordsOutput" class="output"></div>
+  </div>
+  <div id="feature3" class="feature">
+    <h2>3. AI-Powered Headline Generator</h2>
+    <p>Generates multiple optimized headlines using AI.</p>
+    <button onclick="generateHeadline()">Generate Headlines</button>
+    <div id="headlineOutput" class="output"></div>
+  </div>
+  <div id="feature4" class="feature">
+    <h2>4. About Section Enhancer</h2>
+    <p>Improves the “About” section with storytelling, buzzwords, achievements, and personality.</p>
+    <button onclick="enhanceAboutSection()">Enhance About Section</button>
+    <div id="aboutOutput" class="output"></div>
+  </div>
+  <div id="feature5" class="feature">
+    <h2>5. Resume-to-LinkedIn Sync</h2>
+    <p>Uploads your resume, calculates ATS score, and rebuilds it with better content and alignment for an improved ATS score.</p>
+    <label>Upload Resume (PDF or Text):</label>
+    <input type="file" id="resumeFileSync">
+    <button onclick="syncResume()">Sync and Optimize Resume</button>
+    <div id="resumeOutput" class="output"></div>
+    <button id="downloadDocBtn" class="download-btn" style="display:none;" onclick="downloadResume('doc')">Download as DOC</button>
+    <button id="downloadPdfBtn" class="download-btn" style="display:none;" onclick="downloadResume('pdf')">Download as PDF</button>
+  </div>
+  <div id="feature6" class="feature">
+    <h2>6. Skill Gap Analyzer</h2>
+    <p>Compares your skills with the top skills required in your desired job role.</p>
+    <input type="text" id="targetRole" placeholder="Enter target role (e.g., Software Engineer)">
+    <button onclick="analyzeSkillGap()">Analyze Skill Gap</button>
+    <div id="skillGapOutput" class="output"></div>
+  </div>
+  <div id="feature7" class="feature">
+    <h2>7. AI Cover Letter and DM Generator</h2>
+    <p>Writes custom cover letters and cold DMs with tone options.</p>
+    <input type="text" id="recipient" placeholder="Enter recipient name">
+    <select id="tone">
+      <option value="professional">Professional</option>
+      <option value="friendly">Friendly</option>
+      <option value="enthusiastic">Enthusiastic</option>
+    </select>
+    <button onclick="generateCoverLetter()">Generate Cover Letter/DM</button>
+    <div id="coverLetterOutput" class="output"></div>
+  </div>
+  <div id="feature8" class="feature">
+    <h2>8. Job Match Score Analyzer</h2>
+    <p>Evaluates how well your profile matches a job description based on skills and experience.</p>
+    <textarea id="jobDescMatch" rows="4" placeholder="Paste the job description here..."></textarea>
+    <button onclick="analyzeJobMatch()">Analyze Job Match</button>
+    <div id="jobMatchOutput" class="output"></div>
+  </div>
+</div>
+
+<script>
+  let userData = null;
+
+  // Fetch user data on page load
+  async function loadUserData() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const username = urlParams.get('username');
+    if (!username) {
+      console.error('Username not found in URL');
+      alert('Error: Username not found in URL. Please log in again.');
+      window.location.href = '/index.html';
+      return;
+    }
+
+    try {
+      console.log('Fetching user data for username:', username);
+      const response = await fetch(`/api/dashboard/${username}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Raw API response:', JSON.stringify(data, null, 2));
+
+      userData = data;
+
+      // Access the nested profileData object
+      const profile = data.profileData || {};
+      console.log('Extracted profileData:', JSON.stringify(profile, null, 2));
+
+      // Populate the dashboard with data
+      document.getElementById('userUsername').textContent = data.username || 'N/A';
+      document.getElementById('userName').textContent = profile.name || 'N/A';
+      document.getElementById('userHeadline').textContent = profile.headline || 'N/A';
+      document.getElementById('userSummary').textContent = profile.summary || 'N/A';
+      document.getElementById('userExperience').textContent = (profile.experience && Array.isArray(profile.experience) ? profile.experience.join(', ') : 'N/A');
+
+      // Clean up skills by removing duplicates and redundant "(CSS)" prefix
+      const skills = profile.skills && Array.isArray(profile.skills) 
+        ? [...new Set(profile.skills.map(skill => skill.replace(/^\(CSS\)\s*/, '')))].join(', ')
+        : 'N/A';
+      document.getElementById('userSkills').textContent = skills;
+
+      document.getElementById('profilePic').src = data.profileImage || 'https://via.placeholder.com/40';
+    } catch (error) {
+      console.error('Error loading user data:', error.message);
+      alert('Error loading user data: ' + error.message);
+    }
+  }
+
+  // Handle profile image upload
+  document.getElementById('profileImageInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('profileImage', file);
+    formData.append('username', userData.username);
+
+    try {
+      const response = await fetch('/api/upload-profile-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to upload image');
+      }
+
+      document.getElementById('profilePic').src = data.imagePath;
+      userData.profileImage = data.imagePath;
+      alert('Profile image uploaded successfully!');
+    } catch (error) {
+      console.error('Error uploading image:', error.message);
+      alert('Error uploading image: ' + error.message);
+    }
+  });
+
+  function showFeature(num) {
+    const features = document.querySelectorAll(".feature");
+    features.forEach(f => f.style.display = "none");
+    const active = document.getElementById("feature" + num);
+    if (active) active.style.display = "block";
+  }
+
+  async function analyzeProfileScore() {
+    if (!userData) {
+      alert('User data not loaded. Please refresh the page.');
+      return;
+    }
+    const profile = userData.profileData || {};
+    let score = 0;
+    if (profile.name) score += 10;
+    if (profile.headline) score += 20;
+    if (profile.summary) score += 20;
+    if (profile.experience?.length > 0) score += 20;
+    if (profile.skills?.length > 0) score += 20;
+    if (userData.profileImage) score += 10;
+    const suggestions = score < 80 ? 'Add more details to your profile, such as certifications and recommendations.' : 'Your profile is well-optimized!';
+    document.getElementById('scoreOutput').innerText = `Profile Optimization Score: ${score}/100\nSuggestions: ${suggestions}`;
+  }
+
+  async function optimizeKeywords() {
+    if (!userData) {
+      alert('User data not loaded. Please refresh the page.');
+      return;
+    }
+    const profile = userData.profileData || {};
+    const jobDesc = document.getElementById('jobDescKeywords').value;
+    if (!jobDesc) {
+      alert('Please enter a job description.');
+      return;
+    }
+    const keywords = extractKeywords(jobDesc);
+    const updatedHeadline = `${profile.headline} | ${keywords.slice(0, 2).join(', ')}`;
+    const updatedSummary = `${profile.summary}\n\nKeywords: ${keywords.join(', ')}`;
+    const updatedExperience = profile.experience?.map(exp => `${exp} (Relevant Skills: ${keywords.slice(0, 1).join(', ')})`).join('\n') || 'N/A';
+    document.getElementById('keywordsOutput').innerText = `Optimized Headline: ${updatedHeadline}\nOptimized Summary: ${updatedSummary}\nOptimized Experience:\n${updatedExperience}`;
+  }
+
+  function extractKeywords(text) {
+    const commonKeywords = ['JavaScript', 'Python', 'React', 'Node.js', 'MongoDB', 'Agile', 'Cloud', 'AWS', 'DevOps'];
+    return commonKeywords.filter(keyword => text.toLowerCase().includes(keyword.toLowerCase()));
+  }
+
+  async function generateHeadline() {
+    if (!userData) {
+      alert('User data not loaded. Please refresh the page.');
+      return;
+    }
+    const profile = userData.profileData || {};
+    const headlines = [
+      `${profile.headline} | Expert in ${profile.skills?.[0] || 'Tech'} at ${profile.experience?.[0] || 'Industry'}`,
+      `${profile.name} | ${profile.skills?.slice(0, 2).join(' & ')} Specialist`,
+      `Innovative ${profile.headline} with ${profile.experience?.length || 0}+ Years in ${profile.skills?.[1] || 'Tech'}`
+    ];
+    document.getElementById('headlineOutput').innerText = `Generated Headlines:\n${headlines.join('\n')}`;
+  }
+
+  async function enhanceAboutSection() {
+    if (!userData) {
+      alert('User data not loaded. Please refresh the page.');
+      return;
+    }
+    const profile = userData.profileData || {};
+    const enhancedSummary = `🌟 ${profile.summary}\n\nAs a passionate ${profile.headline}, I specialize in ${profile.skills?.join(', ') || 'various areas'}. My journey includes impactful roles like ${profile.experience?.join(', ') || 'various positions'}, where I’ve driven innovation and achieved excellence. I’m dedicated to leveraging my expertise to create meaningful impact in the industry.`;
+    document.getElementById('aboutOutput').innerText = `Enhanced About Section:\n${enhancedSummary}`;
+  }
+
+  async function syncResume() {
+    if (!userData) {
+      alert('User data not loaded. Please refresh the page.');
+      return;
+    }
+    const profile = userData.profileData || {};
+    const resumeFile = document.getElementById('resumeFileSync').files[0];
+    if (!resumeFile) {
+      alert('Please upload a resume.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const resumeText = e.target.result;
+      const keywords = extractKeywords(resumeText);
+      let initialAtsScore = 50;
+      if (keywords.length > 0) initialAtsScore += keywords.length * 5;
+      if (resumeText.includes(profile.skills?.join(' '))) initialAtsScore += 10;
+      initialAtsScore = Math.min(initialAtsScore, 100);
+
+      const enhancedKeywords = [...new Set([...keywords, ...profile.skills])];
+      const newResume = `
+# Optimized Resume for ${profile.name}
+
+## Contact Information
+- Email: ${userData.linkedInEmail || 'N/A'}
+- LinkedIn: ${userData.linkedInUrl || 'N/A'}
+
+## Professional Headline
+${profile.headline} | Expert in ${enhancedKeywords.slice(0, 3).join(', ')}
+
+## Summary
+${profile.summary}
+Enhanced with Keywords: ${enhancedKeywords.join(', ')}
+
+## Experience
+${profile.experience?.map(exp => `- ${exp} (Skills: ${enhancedKeywords.slice(0, 2).join(', ')})`).join('\n') || 'N/A'}
+
+## Skills
+${enhancedKeywords.join(', ')}
+
+## Achievements
+- Optimized profile for ATS compatibility, achieving a high match score.
+- Demonstrated expertise in ${profile.skills?.slice(0, 2).join(' and ') || 'key areas'}.
+      `;
+
+      let improvedAtsScore = initialAtsScore + 15;
+      if (enhancedKeywords.length > 5) improvedAtsScore += 10;
+      improvedAtsScore = Math.min(improvedAtsScore, 100);
+
+      document.getElementById('resumeOutput').innerText = `Initial ATS Score: ${initialAtsScore}%\nImproved ATS Score: ${improvedAtsScore}%\n\n${newResume}`;
+      document.getElementById('downloadDocBtn').style.display = 'inline-block';
+      document.getElementById('downloadPdfBtn').style.display = 'inline-block';
+
+      localStorage.setItem('newResume', newResume);
+    };
+    reader.readAsText(resumeFile);
+  }
+
+  function downloadResume(format) {
+    const resumeContent = localStorage.getItem('newResume');
+    if (!resumeContent) {
+      alert('No resume content available for download.');
+      return;
+    }
+
+    if (format === 'doc') {
+      const blob = new Blob([resumeContent], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'optimized_resume.doc';
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'pdf') {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(12);
+      doc.text(resumeContent, 10, 10);
+      doc.save('optimized_resume.pdf');
+    }
+  }
+
+  async function analyzeSkillGap() {
+    if (!userData) {
+      alert('User data not loaded. Please refresh the page.');
+      return;
+    }
+    const profile = userData.profileData || {};
+    const targetRole = document.getElementById('targetRole').value;
+    if (!targetRole) {
+      alert('Please enter a target role.');
+      return;
+    }
+    const requiredSkills = targetRole.toLowerCase().includes('software engineer') 
+      ? ['JavaScript', 'Python', 'React', 'Node.js', 'MongoDB', 'Agile']
+      : ['Marketing', 'SEO', 'Content Creation', 'Analytics'];
+    const missingSkills = requiredSkills.filter(skill => !profile.skills?.includes(skill));
+    const suggestions = missingSkills.length > 0 
+      ? `Missing skills for ${targetRole}: ${missingSkills.join(', ')}\nSuggested Resources: Coursera, Udemy, freeCodeCamp`
+      : `Your skills align well with ${targetRole}!`;
+    document.getElementById('skillGapOutput').innerText = suggestions;
+  }
+
+  async function generateCoverLetter() {
+    if (!userData) {
+      alert('User data not loaded. Please refresh the page.');
+      return;
+    }
+    const profile = userData.profileData || {};
+    const recipient = document.getElementById('recipient').value;
+    const tone = document.getElementById('tone').value;
+    if (!recipient) {
+      alert('Please enter a recipient name.');
+      return;
+    }
+    const toneText = tone === 'professional' ? 'I am excited to apply for the role.' : tone === 'friendly' ? 'I’d love to join your team!' : 'I’m thrilled to connect and explore opportunities!';
+    const content = `
+Dear ${recipient},
+${toneText} With expertise in ${profile.skills?.join(', ') || 'various areas'}, and experience in ${profile.experience?.join(', ') || 'multiple roles'}, I believe I can contribute to your team.
+Sincerely,
+${profile.name}
+    `;
+    document.getElementById('coverLetterOutput').innerText = content;
+  }
+
+  async function analyzeJobMatch() {
+    if (!userData) {
+      alert('User data not loaded. Please refresh the page.');
+      return;
+    }
+    const profile = userData.profileData || {};
+    const jobDesc = document.getElementById('jobDescMatch').value;
+    if (!jobDesc) {
+      alert('Please enter a job description.');
+      return;
+    }
+    const keywords = extractKeywords(jobDesc);
+    let skillMatchScore = 0;
+    profile.skills?.forEach(skill => {
+      if (keywords.includes(skill)) skillMatchScore += 20;
+    });
+    let experienceMatchScore = profile.experience?.some(exp => jobDesc.toLowerCase().includes(exp.toLowerCase())) ? 40 : 0;
+    const totalScore = Math.min(skillMatchScore + experienceMatchScore, 100);
+    const suggestions = totalScore < 80 ? 'Consider adding more relevant skills or experience to your profile.' : 'Great match! Apply with confidence.';
+    document.getElementById('jobMatchOutput').innerText = `Job Match Score: ${totalScore}%\nSkills Match: ${skillMatchScore}%\nExperience Match: ${experienceMatchScore}%\n${suggestions}`;
+  }
+
+  window.onload = () => {
+    loadUserData();
+    showFeature(1);
+  };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>
