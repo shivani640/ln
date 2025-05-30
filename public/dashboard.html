@@ -196,11 +196,10 @@
   <div class="user-dashboard" id="userDashboard">
     <h2>User Profile</h2>
     <p><strong>Username:</strong> <span id="userUsername"></span></p>
-    <p><strong>Name:</strong> <span id="userName"></span></p>
-    <p><strong>Headline:</strong> <span id="userHeadline"></span></p>
-    <p><strong>Summary:</strong> <span id="userSummary"></span></p>
-    <p><strong>Experience:</strong> <span id="userExperience"></span></p>
-    <p><strong>Skills:</strong> <span id="userSkills"></span></p>
+    <p><strong>LinkedIn Email:</strong> <span id="linkedInEmail"></span></p>
+    <p><strong>LinkedIn URL:</strong> <span id="linkedInUrl"></span></p>
+    <p><strong>PDF Content:</strong></p>
+    <pre id="pdfContent"></pre>
   </div>
 
   <div id="feature1" class="feature">
@@ -211,26 +210,26 @@
   </div>
   <div id="feature2" class="feature">
     <h2>2. Keyword Optimization</h2>
-    <p>Scans LinkedIn headline, summary, and experience for job-specific keywords.</p>
+    <p>Scans LinkedIn profile text for job-specific keywords.</p>
     <textarea id="jobDescKeywords" rows="4" placeholder="Paste the job description here..."></textarea>
     <button onclick="optimizeKeywords()">Optimize Keywords</button>
     <div id="keywordsOutput" class="output"></div>
   </div>
   <div id="feature3" class="feature">
     <h2>3. AI-Powered Headline Generator</h2>
-    <p>Generates multiple optimized headlines using AI.</p>
+    <p>Generates optimized headlines using AI based on PDF content.</p>
     <button onclick="generateHeadline()">Generate Headlines</button>
     <div id="headlineOutput" class="output"></div>
   </div>
   <div id="feature4" class="feature">
     <h2>4. About Section Enhancer</h2>
-    <p>Improves the “About” section with storytelling, buzzwords, achievements, and personality.</p>
+    <p>Improves the “About” section using PDF content.</p>
     <button onclick="enhanceAboutSection()">Enhance About Section</button>
     <div id="aboutOutput" class="output"></div>
   </div>
   <div id="feature5" class="feature">
     <h2>5. Resume-to-LinkedIn Sync</h2>
-    <p>Uploads your resume, calculates ATS score, and rebuilds it with better content and alignment for an improved ATS score.</p>
+    <p>Uploads your resume, calculates ATS score, and rebuilds it with better content.</p>
     <label>Upload Resume (PDF or Text):</label>
     <input type="file" id="resumeFileSync">
     <button onclick="syncResume()">Sync and Optimize Resume</button>
@@ -296,25 +295,15 @@
 
       const data = await response.json();
       console.log('Raw API response:', JSON.stringify(data, null, 2));
+      console.log('PDF text received (first 500 characters):', data.pdfText ? data.pdfText.substring(0, 500) : 'No pdfText');
 
       userData = data;
 
-      // Access the nested profileData object
-      const profile = data.profileData || {};
-      console.log('Extracted profileData:', JSON.stringify(profile, null, 2));
-
       // Populate the dashboard with data
       document.getElementById('userUsername').textContent = data.username || 'N/A';
-      document.getElementById('userName').textContent = profile.name || 'N/A';
-      document.getElementById('userHeadline').textContent = profile.headline || 'N/A';
-      document.getElementById('userSummary').textContent = profile.summary || 'N/A';
-      document.getElementById('userExperience').textContent = (profile.experience && Array.isArray(profile.experience) ? profile.experience.join(', ') : 'N/A');
-
-      // Clean up skills by removing duplicates and redundant "(CSS)" prefix
-      const skills = profile.skills && Array.isArray(profile.skills) 
-        ? [...new Set(profile.skills.map(skill => skill.replace(/^\(CSS\)\s*/, '')))].join(', ')
-        : 'N/A';
-      document.getElementById('userSkills').textContent = skills;
+      document.getElementById('linkedInEmail').textContent = data.linkedInEmail || 'N/A';
+      document.getElementById('linkedInUrl').textContent = data.linkedInUrl || 'N/A';
+      document.getElementById('pdfContent').textContent = data.pdfText || 'No PDF content available';
 
       document.getElementById('profilePic').src = data.profileImage || 'https://via.placeholder.com/40';
     } catch (error) {
@@ -364,15 +353,14 @@
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const profile = userData.profileData || {};
+    const pdfText = userData.pdfText || '';
     let score = 0;
-    if (profile.name) score += 10;
-    if (profile.headline) score += 20;
-    if (profile.summary) score += 20;
-    if (profile.experience?.length > 0) score += 20;
-    if (profile.skills?.length > 0) score += 20;
+    if (pdfText.length > 100) score += 30; // Basic content exists
+    if (pdfText.toLowerCase().includes('experience')) score += 20;
+    if (pdfText.toLowerCase().includes('skills')) score += 20;
+    if (pdfText.toLowerCase().includes('education')) score += 20;
     if (userData.profileImage) score += 10;
-    const suggestions = score < 80 ? 'Add more details to your profile, such as certifications and recommendations.' : 'Your profile is well-optimized!';
+    const suggestions = score < 80 ? 'Add more details to your profile, such as experience, skills, and education.' : 'Your profile is well-optimized!';
     document.getElementById('scoreOutput').innerText = `Profile Optimization Score: ${score}/100\nSuggestions: ${suggestions}`;
   }
 
@@ -381,17 +369,18 @@
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const profile = userData.profileData || {};
+    const pdfText = userData.pdfText || '';
     const jobDesc = document.getElementById('jobDescKeywords').value;
     if (!jobDesc) {
       alert('Please enter a job description.');
       return;
     }
     const keywords = extractKeywords(jobDesc);
-    const updatedHeadline = `${profile.headline} | ${keywords.slice(0, 2).join(', ')}`;
-    const updatedSummary = `${profile.summary}\n\nKeywords: ${keywords.join(', ')}`;
-    const updatedExperience = profile.experience?.map(exp => `${exp} (Relevant Skills: ${keywords.slice(0, 1).join(', ')})`).join('\n') || 'N/A';
-    document.getElementById('keywordsOutput').innerText = `Optimized Headline: ${updatedHeadline}\nOptimized Summary: ${updatedSummary}\nOptimized Experience:\n${updatedExperience}`;
+    const missingKeywords = keywords.filter(keyword => !pdfText.toLowerCase().includes(keyword.toLowerCase()));
+    const suggestions = missingKeywords.length > 0 
+      ? `Missing keywords: ${missingKeywords.join(', ')}\nConsider adding these to your profile.`
+      : `Your profile already contains most relevant keywords: ${keywords.join(', ')}`;
+    document.getElementById('keywordsOutput').innerText = suggestions;
   }
 
   function extractKeywords(text) {
@@ -404,11 +393,12 @@
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const profile = userData.profileData || {};
+    const pdfText = userData.pdfText || '';
+    const keywords = extractKeywords(pdfText);
     const headlines = [
-      `${profile.headline} | Expert in ${profile.skills?.[0] || 'Tech'} at ${profile.experience?.[0] || 'Industry'}`,
-      `${profile.name} | ${profile.skills?.slice(0, 2).join(' & ')} Specialist`,
-      `Innovative ${profile.headline} with ${profile.experience?.length || 0}+ Years in ${profile.skills?.[1] || 'Tech'}`
+      `Professional with Expertise in ${keywords.slice(0, 2).join(' & ') || 'Tech'}`,
+      `Experienced in ${keywords.slice(0, 1)[0] || 'Technology'} | Seeking Opportunities`,
+      `Skilled in ${keywords.slice(0, 3).join(', ') || 'Multiple Areas'}`
     ];
     document.getElementById('headlineOutput').innerText = `Generated Headlines:\n${headlines.join('\n')}`;
   }
@@ -418,8 +408,9 @@
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const profile = userData.profileData || {};
-    const enhancedSummary = `🌟 ${profile.summary}\n\nAs a passionate ${profile.headline}, I specialize in ${profile.skills?.join(', ') || 'various areas'}. My journey includes impactful roles like ${profile.experience?.join(', ') || 'various positions'}, where I’ve driven innovation and achieved excellence. I’m dedicated to leveraging my expertise to create meaningful impact in the industry.`;
+    const pdfText = userData.pdfText || '';
+    const keywords = extractKeywords(pdfText);
+    const enhancedSummary = `🌟 About Me\n\nI am a dedicated professional with experience in ${keywords.join(', ') || 'various areas'}. My background includes impactful contributions in my field, and I’m passionate about leveraging my skills to drive innovation.`;
     document.getElementById('aboutOutput').innerText = `Enhanced About Section:\n${enhancedSummary}`;
   }
 
@@ -428,7 +419,7 @@
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const profile = userData.profileData || {};
+    const pdfText = userData.pdfText || '';
     const resumeFile = document.getElementById('resumeFileSync').files[0];
     if (!resumeFile) {
       alert('Please upload a resume.');
@@ -441,33 +432,23 @@
       const keywords = extractKeywords(resumeText);
       let initialAtsScore = 50;
       if (keywords.length > 0) initialAtsScore += keywords.length * 5;
-      if (resumeText.includes(profile.skills?.join(' '))) initialAtsScore += 10;
+      if (resumeText.toLowerCase().includes('experience')) initialAtsScore += 10;
       initialAtsScore = Math.min(initialAtsScore, 100);
 
-      const enhancedKeywords = [...new Set([...keywords, ...profile.skills])];
+      const enhancedKeywords = [...new Set([...keywords, ...extractKeywords(pdfText)])];
       const newResume = `
-# Optimized Resume for ${profile.name}
+# Optimized Resume
 
 ## Contact Information
 - Email: ${userData.linkedInEmail || 'N/A'}
 - LinkedIn: ${userData.linkedInUrl || 'N/A'}
 
-## Professional Headline
-${profile.headline} | Expert in ${enhancedKeywords.slice(0, 3).join(', ')}
-
 ## Summary
-${profile.summary}
+${pdfText.slice(0, 200)}...
 Enhanced with Keywords: ${enhancedKeywords.join(', ')}
-
-## Experience
-${profile.experience?.map(exp => `- ${exp} (Skills: ${enhancedKeywords.slice(0, 2).join(', ')})`).join('\n') || 'N/A'}
 
 ## Skills
 ${enhancedKeywords.join(', ')}
-
-## Achievements
-- Optimized profile for ATS compatibility, achieving a high match score.
-- Demonstrated expertise in ${profile.skills?.slice(0, 2).join(' and ') || 'key areas'}.
       `;
 
       let improvedAtsScore = initialAtsScore + 15;
@@ -512,7 +493,7 @@ ${enhancedKeywords.join(', ')}
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const profile = userData.profileData || {};
+    const pdfText = userData.pdfText || '';
     const targetRole = document.getElementById('targetRole').value;
     if (!targetRole) {
       alert('Please enter a target role.');
@@ -521,10 +502,11 @@ ${enhancedKeywords.join(', ')}
     const requiredSkills = targetRole.toLowerCase().includes('software engineer') 
       ? ['JavaScript', 'Python', 'React', 'Node.js', 'MongoDB', 'Agile']
       : ['Marketing', 'SEO', 'Content Creation', 'Analytics'];
-    const missingSkills = requiredSkills.filter(skill => !profile.skills?.includes(skill));
+    const presentSkills = requiredSkills.filter(skill => pdfText.toLowerCase().includes(skill.toLowerCase()));
+    const missingSkills = requiredSkills.filter(skill => !pdfText.toLowerCase().includes(skill.toLowerCase()));
     const suggestions = missingSkills.length > 0 
       ? `Missing skills for ${targetRole}: ${missingSkills.join(', ')}\nSuggested Resources: Coursera, Udemy, freeCodeCamp`
-      : `Your skills align well with ${targetRole}!`;
+      : `Your skills align well with ${targetRole}! Present skills: ${presentSkills.join(', ')}`;
     document.getElementById('skillGapOutput').innerText = suggestions;
   }
 
@@ -533,7 +515,7 @@ ${enhancedKeywords.join(', ')}
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const profile = userData.profileData || {};
+    const pdfText = userData.pdfText || '';
     const recipient = document.getElementById('recipient').value;
     const tone = document.getElementById('tone').value;
     if (!recipient) {
@@ -541,11 +523,12 @@ ${enhancedKeywords.join(', ')}
       return;
     }
     const toneText = tone === 'professional' ? 'I am excited to apply for the role.' : tone === 'friendly' ? 'I’d love to join your team!' : 'I’m thrilled to connect and explore opportunities!';
+    const keywords = extractKeywords(pdfText);
     const content = `
 Dear ${recipient},
-${toneText} With expertise in ${profile.skills?.join(', ') || 'various areas'}, and experience in ${profile.experience?.join(', ') || 'multiple roles'}, I believe I can contribute to your team.
+${toneText} My background includes expertise in ${keywords.join(', ') || 'various areas'}. I am confident I can contribute to your team.
 Sincerely,
-${profile.name}
+${userData.username}
     `;
     document.getElementById('coverLetterOutput').innerText = content;
   }
@@ -555,7 +538,7 @@ ${profile.name}
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const profile = userData.profileData || {};
+    const pdfText = userData.pdfText || '';
     const jobDesc = document.getElementById('jobDescMatch').value;
     if (!jobDesc) {
       alert('Please enter a job description.');
@@ -563,10 +546,10 @@ ${profile.name}
     }
     const keywords = extractKeywords(jobDesc);
     let skillMatchScore = 0;
-    profile.skills?.forEach(skill => {
-      if (keywords.includes(skill)) skillMatchScore += 20;
+    keywords.forEach(keyword => {
+      if (pdfText.toLowerCase().includes(keyword.toLowerCase())) skillMatchScore += 20;
     });
-    let experienceMatchScore = profile.experience?.some(exp => jobDesc.toLowerCase().includes(exp.toLowerCase())) ? 40 : 0;
+    let experienceMatchScore = pdfText.toLowerCase().includes('experience') ? 40 : 0;
     const totalScore = Math.min(skillMatchScore + experienceMatchScore, 100);
     const suggestions = totalScore < 80 ? 'Consider adding more relevant skills or experience to your profile.' : 'Great match! Apply with confidence.';
     document.getElementById('jobMatchOutput').innerText = `Job Match Score: ${totalScore}%\nSkills Match: ${skillMatchScore}%\nExperience Match: ${experienceMatchScore}%\n${suggestions}`;

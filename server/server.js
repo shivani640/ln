@@ -1,58 +1,35 @@
 const express = require('express');
 const path = require('path');
-const { MongoClient } = require('mongodb');
 const multer = require('multer');
+const pdfParse = require('pdf-parse');
+const { connectDB } = require('./db/connect');
+const Registration = require('./db/registrations');
+const User = require('./db/users');
+const UserProfileData = require('./db/user_profile_data');
 require('dotenv').config();
 
 const app = express();
+
+// Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Enable CORS to handle cross-origin requests (if frontend and backend are on different ports)
+// Enable CORS
 const cors = require('cors');
 app.use(cors({
-  origin: '*', // Adjust this in production to specific origins
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type'],
 }));
 
-// Set up Multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'public/uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
+// Set up Multer to use memory storage (no disk writes)
+const upload = multer({ storage: multer.memoryStorage() }).single('linkedinPdf');
+
+// Connect to MongoDB
+connectDB().catch(err => {
+  console.error('Failed to connect to database:', err.message);
+  process.exit(1);
 });
-const upload = multer({ storage });
-
-// MongoDB connection setup using the native driver
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/linkedin_optimizer';
-let client;
-let db;
-
-const connectDB = async () => {
-  try {
-    client = new MongoClient(MONGODB_URI);
-    await client.connect();
-    db = client.db('linkedin_optimizer');
-    console.log('Connected to MongoDB using native driver - Database: linkedin_optimizer');
-  } catch (err) {
-    console.error('Failed to connect to MongoDB:', err.message);
-    process.exit(1);
-  }
-};
-
-// Connect to MongoDB before starting the server
-connectDB()
-  .then(() => {
-    console.log('Database connection established. Starting server...');
-  })
-  .catch(err => {
-    console.error('Failed to connect to database:', err.message);
-    process.exit(1);
-  });
 
 // Register Route
 app.post('/api/register', async (req, res) => {
@@ -64,17 +41,14 @@ app.post('/api/register', async (req, res) => {
   }
 
   try {
-    const registrations = db.collection('registrations');
-    const existingUser = await registrations.findOne({ username });
+    const existingUser = await Registration.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ error: 'Username already exists' });
     }
 
-    const registration = { username, firstName, lastName, email, password };
-    await registrations.insertOne(registration);
+    const registration = new Registration({ username, firstName, lastName, email, password });
+    await registration.save();
     console.log('User registered successfully in registrations collection:', registration);
-    const savedRegistration = await registrations.findOne({ username });
-    console.log('Queried registrations collection after save:', savedRegistration);
 
     res.status(201).json({ message: 'Registration successful', username });
   } catch (error) {
@@ -93,8 +67,7 @@ app.post('/api/login', async (req, res) => {
   }
 
   try {
-    const registrations = db.collection('registrations');
-    const registration = await registrations.findOne({ username });
+    const registration = await Registration.findOne({ username });
     if (!registration) {
       return res.status(400).json({ error: 'User not found. Please register.' });
     }
@@ -110,93 +83,123 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Save LinkedIn Email/URL (in 'users' collection) and Profile Data (in 'user_profile_data' collection)
-app.post('/api/save-profile', async (req, res) => {
-  const { username, linkedInEmail, linkedInUrl, profileData } = req.body;
-  console.log('Received data to save:', { username, linkedInEmail, linkedInUrl, profileData });
+// Upload LinkedIn PDF and Save Data
+app.post('/api/upload-linkedin-pdf', (req, res) => {
+  console.log('Received request to /api/upload-linkedin-pdf');
 
-  if (!username || !linkedInEmail || !linkedInUrl || !profileData) {
-    return res.status(400).json({ error: 'Missing required fields (username, linkedInEmail, linkedInUrl, profileData)' });
-  }
-
-  if (!profileData.name || !profileData.headline || !profileData.summary || !profileData.experience || !profileData.skills) {
-    return res.status(400).json({ error: 'All profileData fields are required (name, headline, summary, experience, skills)' });
-  }
-
-  try {
-    const registrations = db.collection('registrations');
-    const registration = await registrations.findOne({ username });
-    if (!registration) {
-      console.log('User not found in registrations collection:', username);
-      return res.status(404).json({ error: 'User not found. Please register or log in again.' });
+  upload(req, res, async (err) => {
+    if (err) {
+      console.error('Multer error:', err.message, err.stack);
+      return res.status(500).json({ error: 'File upload failed: ' + err.message });
     }
 
-    const users = db.collection('users');
-    const existingUser = await users.findOne({ username });
-    if (existingUser) {
-      await users.updateOne(
-        { username },
-        { $set: { linkedInEmail, linkedInUrl } }
-      );
-      console.log('LinkedIn data updated in users collection:', { username, linkedInEmail, linkedInUrl });
-    } else {
-      const user = { username, linkedInEmail, linkedInUrl };
-      await users.insertOne(user);
-      console.log('LinkedIn data saved in users collection:', user);
+    console.log('Request body:', req.body);
+    console.log('Uploaded file:', req.file ? {
+      fieldname: req.file.fieldname,
+      originalname: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    } : 'No file uploaded');
+
+    const { username, linkedInEmail, linkedInUrl } = req.body;
+
+    if (!username || !linkedInEmail || !linkedInUrl || !req.file) {
+      console.error('Missing required fields:', { username, linkedInEmail, linkedInUrl, file: !!req.file });
+      return res.status(400).json({ error: 'Missing required fields (username, linkedInEmail, linkedInUrl, linkedinPdf)' });
     }
 
-    const userProfileDataCollection = db.collection('user_profile_data');
-    const existingProfile = await userProfileDataCollection.findOne({ username });
-    if (existingProfile) {
-      await userProfileDataCollection.updateOne(
-        { username },
-        { $set: { 
-          profileData: {
-            name: profileData.name,
-            headline: profileData.headline,
-            summary: profileData.summary,
-            experience: profileData.experience,
-            skills: profileData.skills
-          }
-        } }
-      );
-      console.log('User profile updated in user_profile_data collection:', { username, profileData });
-    } else {
-      const userProfile = { 
-        username, 
-        profileData: {
-          name: profileData.name,
-          headline: profileData.headline,
-          summary: profileData.summary,
-          experience: profileData.experience,
-          skills: profileData.skills
+    try {
+      // Verify user exists in registrations
+      const registration = await Registration.findOne({ username });
+      if (!registration) {
+        console.log('User not found in registrations collection:', username);
+        return res.status(404).json({ error: 'User not found. Please register or log in again.' });
+      }
+
+      // Save LinkedIn email and URL to users collection
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        await User.updateOne(
+          { username },
+          { $set: { linkedInEmail, linkedInUrl } }
+        );
+        console.log('LinkedIn data updated in users collection:', { username, linkedInEmail, linkedInUrl });
+      } else {
+        const user = new User({ username, linkedInEmail, linkedInUrl });
+        await user.save();
+        console.log('LinkedIn data saved in users collection:', user);
+      }
+
+      // Extract raw text from the PDF using pdf-parse
+      let pdfText = '';
+      try {
+        const pdfBuffer = req.file.buffer;
+        console.log('PDF buffer size:', pdfBuffer.length, 'bytes');
+
+        // Attempt to extract text from the PDF
+        const pdfData = await pdfParse(pdfBuffer, { max: 0 }); // max: 0 to extract all pages
+        pdfText = pdfData.text || '';
+        
+        if (!pdfText.trim()) {
+          console.warn('No text extracted from PDF. The PDF might be empty, contain only images, or be a scanned document.');
+          pdfText = 'No text extracted from PDF. It may be a scanned document or contain only images.';
+        } else {
+          console.log('Extracted PDF text (first 500 characters):', pdfText.substring(0, 500));
         }
-      };
-      await userProfileDataCollection.insertOne(userProfile);
-      console.log('User profile created in user_profile_data collection:', userProfile);
-    }
+      } catch (pdfError) {
+        console.error('PDF parsing error:', pdfError.message, pdfError.stack);
+        pdfText = 'Error extracting PDF text: ' + pdfError.message;
+      }
 
-    res.status(200).json({ message: 'Saved successfully', profileData });
-  } catch (error) {
-    console.error('Error saving profile data:', error.message, error.stack);
-    res.status(500).json({ error: 'Failed to save profile data: ' + error.message });
-  }
+      // Save PDF buffer and extracted text to user_profile_data collection
+      const existingProfile = await UserProfileData.findOne({ username });
+      if (existingProfile) {
+        await UserProfileData.updateOne(
+          { username },
+          { $set: { 
+            pdfText, // Store the raw extracted text
+            linkedInPdf: req.file.buffer // Store the PDF as binary data
+          } }
+        );
+        console.log('User profile updated in user_profile_data collection:', { username, pdfText: pdfText.substring(0, 500) });
+      } else {
+        const userProfile = new UserProfileData({ 
+          username, 
+          pdfText, // Store the raw extracted text
+          linkedInPdf: req.file.buffer // Store the PDF as binary data
+        });
+        await userProfile.save();
+        console.log('User profile created in user_profile_data collection:', { username, pdfText: pdfText.substring(0, 500) });
+      }
+
+      // Verify the data was saved correctly by querying the database
+      const savedProfile = await UserProfileData.findOne({ username });
+      if (savedProfile && savedProfile.pdfText) {
+        console.log('Verified saved PDF text (first 500 characters):', savedProfile.pdfText.substring(0, 500));
+      } else {
+        console.error('Failed to verify saved PDF text in database:', savedProfile);
+      }
+
+      res.status(200).json({ message: 'PDF uploaded and saved successfully', pdfText });
+    } catch (error) {
+      console.error('Error uploading PDF:', error.message, error.stack);
+      res.status(500).json({ error: 'Failed to upload PDF: ' + error.message });
+    }
+  });
 });
 
 // Get Dashboard Data
 app.get('/api/dashboard/:username', async (req, res) => {
   try {
     console.log('Fetching dashboard data for username:', req.params.username);
-    const userProfileDataCollection = db.collection('user_profile_data');
-    const userProfileData = await userProfileDataCollection.findOne({ username: req.params.username });
+    const userProfileData = await UserProfileData.findOne({ username: req.params.username });
     if (!userProfileData) {
       console.error('User profile data not found for username:', req.params.username);
       return res.status(404).json({ error: 'User profile data not found' });
     }
-    console.log('Retrieved userProfileData:', JSON.stringify(userProfileData, null, 2));
+    console.log('Retrieved userProfileData (pdfText first 500 characters):', userProfileData.pdfText ? userProfileData.pdfText.substring(0, 500) : 'No pdfText');
 
-    const users = db.collection('users');
-    const user = await users.findOne({ username: req.params.username });
+    const user = await User.findOne({ username: req.params.username });
     if (!user) {
       console.error('User not found in users collection for username:', req.params.username);
       return res.status(404).json({ error: 'User not found in users collection' });
@@ -205,12 +208,13 @@ app.get('/api/dashboard/:username', async (req, res) => {
 
     const combinedData = {
       username: userProfileData.username,
-      profileData: userProfileData.profileData || {},
+      pdfText: userProfileData.pdfText || 'No PDF content available',
       linkedInEmail: user.linkedInEmail,
       linkedInUrl: user.linkedInUrl,
-      profileImage: userProfileData.profileImage || null,
+      profileImage: userProfileData.profileImage ? userProfileData.profileImage.toString('base64') : null,
+      linkedInPdf: userProfileData.linkedInPdf ? userProfileData.linkedInPdf.toString('base64') : null,
     };
-    console.log('Sending dashboard data:', JSON.stringify(combinedData, null, 2));
+    console.log('Sending dashboard data (pdfText first 500 characters):', combinedData.pdfText.substring(0, 500));
     res.status(200).json(combinedData);
   } catch (error) {
     console.error('Error fetching dashboard data:', error.message, error.stack);
@@ -218,54 +222,30 @@ app.get('/api/dashboard/:username', async (req, res) => {
   }
 });
 
-// Update Profile Data (Allow Modification)
-app.post('/api/update-profile/:username', async (req, res) => {
-  const { headline, summary } = req.body;
-  try {
-    const userProfileDataCollection = db.collection('user_profile_data');
-    const userProfileData = await userProfileDataCollection.findOne({ username: req.params.username });
-    if (!userProfileData) {
-      return res.status(404).json({ error: 'User profile data not found' });
-    }
-
-    const updatedProfileData = {
-      ...userProfileData.profileData,
-      headline: headline || userProfileData.profileData.headline,
-      summary: summary || userProfileData.profileData.summary,
-    };
-
-    await userProfileDataCollection.updateOne(
-      { username: req.params.username },
-      { $set: { profileData: updatedProfileData } }
-    );
-
-    const updatedProfile = await userProfileDataCollection.findOne({ username: req.params.username });
-    res.status(200).json({ message: 'Profile updated successfully', profileData: updatedProfile.profileData });
-  } catch (error) {
-    console.error('Error updating profile data:', error.message, error.stack);
-    res.status(500).json({ error: 'Failed to update profile data: ' + error.message });
-  }
-});
-
 // Upload Profile Image
-app.post('/api/upload-profile-image', upload.single('profileImage'), async (req, res) => {
+app.post('/api/upload-profile-image', upload, async (req, res) => {
   const { username } = req.body;
   if (!username || !req.file) {
     return res.status(400).json({ error: 'Username and image file are required' });
   }
 
   try {
-    const imagePath = `/uploads/${req.file.filename}`;
-    const userProfileDataCollection = db.collection('user_profile_data');
-    await userProfileDataCollection.updateOne(
+    const imageBuffer = req.file.buffer;
+    await UserProfileData.updateOne(
       { username },
-      { $set: { profileImage: imagePath } }
+      { $set: { profileImage: imageBuffer } }
     );
-    res.status(200).json({ message: 'Image uploaded successfully', imagePath });
+    res.status(200).json({ message: 'Image uploaded successfully', imagePath: 'Stored in database' });
   } catch (error) {
     console.error('Error uploading profile image:', error.message, error.stack);
     res.status(500).json({ error: 'Failed to upload image: ' + error.message });
   }
+});
+
+// Catch-all route for undefined endpoints
+app.use((req, res) => {
+  console.error(`Route not found: ${req.method} ${req.url}`);
+  res.status(404).json({ error: 'Endpoint not found' });
 });
 
 const PORT = process.env.PORT || 3000;
@@ -275,9 +255,6 @@ app.listen(PORT, () => {
 
 // Close MongoDB connection on process exit
 process.on('SIGINT', async () => {
-  if (client) {
-    await client.close();
-    console.log('MongoDB connection closed');
-  }
+  console.log('MongoDB connection closed by connect.js');
   process.exit(0);
 });

@@ -18,28 +18,20 @@
         <input type="password" id="linkedin-password" placeholder="Enter LinkedIn password" required>
         <label>Targeted LinkedIn URL</label>
         <input type="text" id="linkedin-url" placeholder="https://www.linkedin.com/in/your-profile" required>
-        <button type="submit">Open Profile</button>
+        <button type="submit">Visit LinkedIn Profile</button>
       </form>
 
-      <div id="manual-input" style="display: none;">
-        <h3>Profile Data</h3>
-        <form id="profile-form">
-          <label>Name</label>
-          <input type="text" id="name" placeholder="Enter name" required>
-          <label>Headline</label>
-          <input type="text" id="headline" placeholder="Enter headline" required>
-          <label>Summary</label>
-          <textarea id="summary" placeholder="Enter summary" required></textarea>
-          <label>Experience (comma-separated)</label>
-          <input type="text" id="experience" placeholder="Enter experience (e.g., Role1, Role2)" required>
-          <label>Skills (comma-separated)</label>
-          <input type="text" id="skills" placeholder="Enter skills (e.g., Skill1, Skill2)" required>
-          <button type="submit">Save Profile Data</button>
+      <div id="upload-section" style="display: none; margin-top: 20px;">
+        <h3>Upload Your LinkedIn Profile PDF</h3>
+        <form id="pdf-upload-form">
+          <input type="file" id="linkedin-pdf" accept="application/pdf" required>
+          <button type="submit">Upload PDF</button>
         </form>
-        <div id="save-message" style="display: none; margin-top: 20px;">
-          <p>Saved successfully</p>
-          <button onclick="goToDashboard()">Dashboard</button>
-        </div>
+      </div>
+
+      <div id="save-message" style="display: none; margin-top: 20px;">
+        <p>Saved successfully</p>
+        <button onclick="goToDashboard()">Go to Dashboard</button>
       </div>
     </div>
   </div>

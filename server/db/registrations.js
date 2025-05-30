@@ -1,17 +1,4 @@
-const mongoose = require('mongoose');
-require('dotenv').config();
-
-// Connect to MongoDB with the 'linkedin_optimizer' database
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/linkedin_optimizer';
-mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB (registrations.js) - Database: linkedin_optimizer'))
-  .catch(err => {
-    console.error('MongoDB connection error (registrations.js):', err.message);
-    process.exit(1);
-  });
-
-// Registration Schema (for the 'registrations' collection)
-const mongoose = require('mongoose');
+const { mongoose } = require('./connect');
 
 // Registration Schema (for the 'registrations' collection)
 const registrationSchema = new mongoose.Schema({

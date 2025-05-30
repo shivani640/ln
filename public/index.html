@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LinkedIn Booster - Login</title>
+  <title>LinkedIn Booster - Sign In</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -17,21 +17,22 @@
         <label>Password</label>
         <input type="password" id="password" placeholder="Enter password" required>
         <button type="submit">Sign In</button>
-        <p>Not a member? <a href="#" onclick="showRegisterForm()">Register</a></p>
+        <p>Don't have an account? <a href="#" onclick="showRegisterForm()">Register here</a></p>
       </form>
+
       <form id="register-form" style="display: none;">
+        <label>Username</label>
+        <input type="text" id="reg-username" placeholder="Choose a username" required>
         <label>First Name</label>
         <input type="text" id="firstName" placeholder="Enter first name" required>
         <label>Last Name</label>
         <input type="text" id="lastName" placeholder="Enter last name" required>
         <label>Email</label>
         <input type="email" id="email" placeholder="Enter email" required>
-        <label>Username</label>
-        <input type="text" id="reg-username" placeholder="Enter username" required>
         <label>Password</label>
-        <input type="password" id="reg-password" placeholder="Enter password" required>
+        <input type="password" id="reg-password" placeholder="Choose a password" required>
         <button type="submit">Register</button>
-        <p>Already have an account? <a href="#" onclick="showLoginForm()">Sign In</a></p>
+        <p>Already have an account? <a href="#" onclick="showLoginForm()">Sign in here</a></p>
       </form>
     </div>
   </div>

@@ -69,14 +69,16 @@ document.getElementById('login-form')?.addEventListener('submit', async (e) => {
   }
 });
 
-// LinkedIn Form Submission (Open URL Directly and Show Profile Data Form)
+// LinkedIn Form Submission (Visit LinkedIn URL and Show PDF Upload Section)
 document.getElementById('linkedin-form')?.addEventListener('submit', (e) => {
   e.preventDefault();
   console.log('LinkedIn form submitted');
 
   const linkedInEmail = document.getElementById('linkedin-email').value;
+  const linkedInPassword = document.getElementById('linkedin-password').value;
   const linkedInUrl = document.getElementById('linkedin-url').value;
   console.log('LinkedIn Email:', linkedInEmail);
+  console.log('LinkedIn Password:', linkedInPassword);
   console.log('LinkedIn URL:', linkedInUrl);
 
   if (!linkedInUrl || !linkedInUrl.startsWith('https://www.linkedin.com/')) {
@@ -89,9 +91,20 @@ document.getElementById('linkedin-form')?.addEventListener('submit', (e) => {
     return;
   }
 
-  const newWindow = window.open(linkedInUrl, '_blank');
-  console.log('window.open result:', newWindow);
+  if (!linkedInPassword) {
+    alert('Please enter your LinkedIn password');
+    return;
+  }
 
+  const username = localStorage.getItem('username');
+  if (!username) {
+    alert('Error: Username not found. Please log in again.');
+    window.location.href = '/index.html';
+    return;
+  }
+
+  // Open LinkedIn URL
+  const newWindow = window.open(linkedInUrl, '_blank');
   if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
     console.log('Pop-up blocked or failed to open');
     alert('Unable to open the LinkedIn profile automatically. Please allow pop-ups for this site, or manually open the URL: ' + linkedInUrl);
@@ -99,18 +112,20 @@ document.getElementById('linkedin-form')?.addEventListener('submit', (e) => {
     console.log('LinkedIn URL opened successfully');
   }
 
-  document.getElementById('linkedin-form').style.display = 'none';
-  document.getElementById('manual-input').style.display = 'block';
-
+  // Store LinkedIn email and URL in localStorage
   localStorage.setItem('linkedInEmail', linkedInEmail);
+  localStorage.setItem('linkedInPassword', linkedInPassword);
   localStorage.setItem('linkedInUrl', linkedInUrl);
-  console.log('LinkedIn Email stored in localStorage:', localStorage.getItem('linkedInEmail'));
-  console.log('LinkedIn URL stored in localStorage:', localStorage.getItem('linkedInUrl'));
+
+  // Hide LinkedIn form and show PDF upload section
+  document.getElementById('linkedin-form').style.display = 'none';
+  document.getElementById('upload-section').style.display = 'block';
 });
 
-// Manual Profile Data Submission
-document.getElementById('profile-form')?.addEventListener('submit', async (e) => {
+// PDF Upload Form Submission
+document.getElementById('pdf-upload-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
+  console.log('PDF upload form submitted');
 
   const username = localStorage.getItem('username');
   const linkedInEmail = localStorage.getItem('linkedInEmail');
@@ -121,46 +136,46 @@ document.getElementById('profile-form')?.addEventListener('submit', async (e) =>
     window.location.href = '/index.html';
     return;
   }
-  if (!linkedInEmail) {
-    alert('Error: LinkedIn Email not found. Please submit the LinkedIn form again.');
+  if (!linkedInEmail || !linkedInUrl) {
+    alert('Error: LinkedIn email or URL not found. Please submit the LinkedIn form again.');
     document.getElementById('linkedin-form').style.display = 'block';
-    document.getElementById('manual-input').style.display = 'none';
-    return;
-  }
-  if (!linkedInUrl) {
-    alert('Error: LinkedIn URL not found. Please submit the LinkedIn form again.');
-    document.getElementById('linkedin-form').style.display = 'block';
-    document.getElementById('manual-input').style.display = 'none';
+    document.getElementById('upload-section').style.display = 'none';
     return;
   }
 
-  const name = document.getElementById('name').value;
-  const headline = document.getElementById('headline').value;
-  const summary = document.getElementById('summary').value;
-  const experience = document.getElementById('experience').value.split(',').map(item => item.trim());
-  const skills = document.getElementById('skills').value.split(',').map(item => item.trim());
+  const pdfFile = document.getElementById('linkedin-pdf').files[0];
+  if (!pdfFile) {
+    alert('Please select a PDF file to upload.');
+    return;
+  }
 
-  const profileData = { name, headline, summary, experience, skills };
-  console.log('Submitting profile data:', { username, linkedInEmail, linkedInUrl, profileData });
+  const formData = new FormData();
+  formData.append('username', username);
+  formData.append('linkedInEmail', linkedInEmail);
+  formData.append('linkedInUrl', linkedInUrl);
+  formData.append('linkedinPdf', pdfFile);
 
   try {
-    const response = await fetch('/api/save-profile', {
+    const response = await fetch('/api/upload-linkedin-pdf', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, linkedInEmail, linkedInUrl, profileData }),
+      body: formData,
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
-      throw new Error(data.error || `HTTP error! Status: ${response.status}`);
+      const text = await response.text();
+      console.error('Non-JSON response from server:', text);
+      throw new Error(`Server returned status ${response.status}: ${text}`);
     }
 
-    document.getElementById('profile-form').style.display = 'none';
+    const data = await response.json();
+    console.log('PDF uploaded and saved successfully:', data);
+
+    // Hide upload section and show success message
+    document.getElementById('upload-section').style.display = 'none';
     document.getElementById('save-message').style.display = 'block';
   } catch (error) {
-    console.error('Error saving profile data:', error.message);
-    alert('Error saving profile data: ' + error.message);
+    console.error('Error uploading PDF:', error.message);
+    alert('Error uploading PDF: ' + error.message);
   }
 });
 
@@ -185,7 +200,7 @@ async function loadDashboard() {
     return;
   }
 
-  document.getElementById('username').textContent = username;
+  document.getElementById('userUsername').textContent = username;
 
   try {
     const response = await fetch(`/api/dashboard/${username}`);
@@ -196,15 +211,28 @@ async function loadDashboard() {
     }
 
     if (!data.profileData) {
-      alert('No profile data available. Please submit your profile data.');
+      alert('No profile data available. Please upload your LinkedIn PDF.');
       return;
     }
 
-    document.getElementById('name').textContent = data.profileData.name || 'N/A';
-    document.getElementById('headline').value = data.profileData.headline || 'N/A';
-    document.getElementById('summary').value = data.profileData.summary || 'N/A';
-    document.getElementById('experience').textContent = data.profileData.experience.join(', ') || 'N/A';
-    document.getElementById('skills').textContent = data.profileData.skills.join(', ') || 'N/A';
+    console.log('Dashboard data:', data);
+
+    document.getElementById('userUsername').textContent = data.username || 'N/A';
+    document.getElementById('userName').textContent = data.profileData.name || 'N/A';
+    document.getElementById('userHeadline').textContent = data.profileData.headline || 'N/A';
+    document.getElementById('userSummary').textContent = data.profileData.summary || 'N/A';
+    document.getElementById('userExperience').textContent = data.profileData.experience?.join(', ') || 'N/A';
+    document.getElementById('userSkills').textContent = data.profileData.skills?.join(', ') || 'N/A';
+
+    // Optional: Add a link to download/view the PDF
+    if (data.linkedInPdf) {
+      const pdfDataUrl = `data:application/pdf;base64,${data.linkedInPdf}`;
+      const pdfLink = document.createElement('a');
+      pdfLink.href = pdfDataUrl;
+      pdfLink.textContent = 'View LinkedIn PDF';
+      pdfLink.download = `${username}-linkedin-profile.pdf`;
+      document.body.appendChild(pdfLink);
+    }
   } catch (error) {
     console.error('Error loading dashboard data:', error.message);
     alert('Error loading dashboard data: ' + error.message);
