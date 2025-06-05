@@ -144,15 +144,6 @@
       white-space: pre-wrap;
     }
 
-    .download-btn {
-      background: #28a745;
-      margin-left: 10px;
-    }
-
-    .download-btn:hover {
-      background: #218838;
-    }
-
     .logout {
       display: block;
       margin-top: 30px;
@@ -178,11 +169,9 @@
     <li><a onclick="showFeature(2)">Keyword Optimization</a></li>
     <li><a onclick="showFeature(3)">AI-Powered Headline Generator</a></li>
     <li><a onclick="showFeature(4)">About Section Enhancer</a></li>
-    <li><a onclick="showFeature(5)">Resume-to-LinkedIn Sync</a></li>
-    <li><a onclick="showFeature(6)">Skill Gap Analyzer</a></li>
-    <li><a onclick="showFeature(7)">AI Cover Letter and DM Generator</a></li>
-    <li><a onclick="showFeature(8)">Job Match Score Analyzer</a></li>
-    <li><a onclick="showFeature(9)">Fast Language Model Importance</a></li>
+    <li><a onclick="showFeature(5)">Skill Gap Analyzer</a></li>
+    <li><a onclick="showFeature(6)">AI Cover Letter and DM Generator</a></li>
+    <li><a onclick="showFeature(7)">Job Match Score Analyzer</a></li>
   </ul>
   <a class="logout" href="index.html">Logout</a>
 </aside>
@@ -205,13 +194,13 @@
 
   <div id="feature1" class="feature">
     <h2>1. Profile Score Analyzer</h2>
-    <p>Analyzes LinkedIn profile and gives an optimization score (0–100).</p>
+    <p>Analyzes LinkedIn profile and gives an optimization score (0–100) with detailed feedback.</p>
     <button onclick="analyzeProfileScore()">Analyze Profile</button>
     <div id="scoreOutput" class="output"></div>
   </div>
   <div id="feature2" class="feature">
     <h2>2. Keyword Optimization</h2>
-    <p>Scans LinkedIn profile text for job-specific keywords.</p>
+    <p>Scans LinkedIn profile for job-specific keywords and suggests improvements.</p>
     <textarea id="jobDescKeywords" rows="4" placeholder="Paste the job description here..."></textarea>
     <button onclick="optimizeKeywords()">Optimize Keywords</button>
     <div id="keywordsOutput" class="output"></div>
@@ -224,51 +213,45 @@
   </div>
   <div id="feature4" class="feature">
     <h2>4. About Section Enhancer</h2>
-    <p>Improves the “About” section using PDF content.</p>
+    <p>Improves the “About” section with advanced suggestions and tone adjustments.</p>
+    <select id="aboutTone">
+      <option value="professional">Professional Tone</option>
+      <option value="engaging">Engaging Tone</option>
+      <option value="storytelling">Storytelling Tone</option>
+    </select>
     <button onclick="enhanceAboutSection()">Enhance About Section</button>
     <div id="aboutOutput" class="output"></div>
   </div>
   <div id="feature5" class="feature">
-    <h2>5. Resume-to-LinkedIn Sync</h2>
-    <p>Uploads your resume, calculates ATS score, and rebuilds it with better content.</p>
-    <label>Upload Resume (PDF or Text):</label>
-    <input type="file" id="resumeFileSync">
-    <button onclick="syncResume()">Sync and Optimize Resume</button>
-    <div id="resumeOutput" class="output"></div>
-    <button id="downloadDocBtn" class="download-btn" style="display:none;" onclick="downloadResume('doc')">Download as DOC</button>
-    <button id="downloadPdfBtn" class="download-btn" style="display:none;" onclick="downloadResume('pdf')">Download as PDF</button>
-  </div>
-  <div id="feature6" class="feature">
-    <h2>6. Skill Gap Analyzer</h2>
-    <p>Compares your skills with the top skills required in your desired job role.</p>
+    <h2>5. Skill Gap Analyzer</h2>
+    <p>Compares your skills with the top skills required in your desired job role and provides learning resources.</p>
     <input type="text" id="targetRole" placeholder="Enter target role (e.g., Software Engineer)">
     <button onclick="analyzeSkillGap()">Analyze Skill Gap</button>
     <div id="skillGapOutput" class="output"></div>
   </div>
-  <div id="feature7" class="feature">
-    <h2>7. AI Cover Letter and DM Generator</h2>
-    <p>Writes custom cover letters and cold DMs with tone options.</p>
+  <div id="feature6" class="feature">
+    <h2>6. AI Cover Letter and DM Generator</h2>
+    <p>Writes custom cover letters and cold DMs with tone options and personalization.</p>
     <input type="text" id="recipient" placeholder="Enter recipient name">
+    <input type="text" id="companyName" placeholder="Enter company name (optional)">
     <select id="tone">
       <option value="professional">Professional</option>
       <option value="friendly">Friendly</option>
       <option value="enthusiastic">Enthusiastic</option>
     </select>
-    <button onclick="generateCoverLetter()">Generate Cover Letter/DM</button>
+    <select id="messageType">
+      <option value="coverLetter">Cover Letter</option>
+      <option value="dm">Cold DM</option>
+    </select>
+    <button onclick="generateCoverLetter()">Generate</button>
     <div id="coverLetterOutput" class="output"></div>
   </div>
-  <div id="feature8" class="feature">
-    <h2>8. Job Match Score Analyzer</h2>
-    <p>Evaluates how well your profile matches a job description based on skills and experience.</p>
+  <div id="feature7" class="feature">
+    <h2>7. Job Match Score Analyzer</h2>
+    <p>Evaluates how well your profile matches a job description with detailed breakdown.</p>
     <textarea id="jobDescMatch" rows="4" placeholder="Paste the job description here..."></textarea>
     <button onclick="analyzeJobMatch()">Analyze Job Match</button>
     <div id="jobMatchOutput" class="output"></div>
-  </div>
-  <div id="feature9" class="feature">
-    <h2>9. Fast Language Model Importance</h2>
-    <p>Explains the importance of fast language models using the Groq API.</p>
-    <button onclick="explainFastLanguageModels()">Get Explanation</button>
-    <div id="fastModelOutput" class="output"></div>
   </div>
 </div>
 
@@ -276,9 +259,24 @@
   let userData = null;
   const GROQ_API_KEY = "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";
   const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-  const MODEL = "llama3-8b-8192"; // Updated to a supported Groq model
+  const MODEL = "llama3-8b-8192";
+  const MAX_TOKENS = 4000; // Set a safe limit below the 6000 TPM threshold
 
-  // Function to make API calls to Groq with improved error handling
+  // Helper function to estimate token count (1 token ≈ 4 characters)
+  function estimateTokens(text) {
+    return Math.ceil(text.length / 4);
+  }
+
+  // Helper function to truncate text to fit within token limits
+  function truncateText(text, maxTokens) {
+    const estimatedTokens = estimateTokens(text);
+    if (estimatedTokens <= maxTokens) {
+      return { text, truncated: false };
+    }
+    const charLimit = maxTokens * 4;
+    return { text: text.substring(0, charLimit), truncated: true };
+  }
+
   async function callGroqAPI(prompt, responseFormat = null) {
     try {
       const body = {
@@ -415,28 +413,32 @@
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const pdfText = userData.pdfText || '';
+    let pdfText = userData.pdfText || '';
     if (!pdfText.trim()) {
-      document.getElementById('scoreOutput').innerText = "Error: No profile text available to analyze. Please upload a PDF with your LinkedIn profile details.";
+      document.getElementById('scoreOutput').textContent = "Error: No profile text available to analyze. Please upload a PDF with your LinkedIn profile details.";
       return;
     }
+    const truncated = truncateText(pdfText, MAX_TOKENS);
+    pdfText = truncated.text;
     try {
-      const prompt = `Analyze the following LinkedIn profile text and return a JSON object with two fields: "score" (an integer between 0 and 100 representing the optimization score) and "suggestions" (a string with improvement suggestions). If the profile text is too short or lacks key sections, provide a low score and appropriate suggestions.\n\nprofile text: ${pdfText}`;
-      const responseFormat = {
-        type: "json_object"
-      };
+      const prompt = `Analyze this LinkedIn profile text and return a JSON object with "score" (0-100), "suggestions" (improvement suggestions), and "strengths" (profile's strong points). Consider completeness, keyword usage, and clarity.\n\nprofile text: ${pdfText}`;
+      const responseFormat = { type: "json_object" };
       const result = await callGroqAPI(prompt, responseFormat);
       if (result.error) {
-        document.getElementById('scoreOutput').innerText = result.error;
+        document.getElementById('scoreOutput').textContent = result.error;
         return;
       }
-      if (!result.score || !result.suggestions) {
-        document.getElementById('scoreOutput').innerText = "Error: Invalid response format from API. Expected 'score' and 'suggestions' fields.";
+      if (!result.score || !result.suggestions || !result.strengths) {
+        document.getElementById('scoreOutput').textContent = "Error: Invalid response format from API. Expected 'score', 'suggestions', and 'strengths' fields.";
         return;
       }
-      document.getElementById('scoreOutput').innerText = `Profile Optimization Score: ${result.score}/100\nSuggestions:\n${result.suggestions}`;
+      let output = `Profile Optimization Score: ${result.score}/100\nStrengths:\n${result.strengths}\nSuggestions for Improvement:\n${result.suggestions}`;
+      if (truncated.truncated) {
+        output += "\n\nNote: Profile text was truncated due to API token limits. Results may be based on incomplete data.";
+      }
+      document.getElementById('scoreOutput').textContent = output;
     } catch (error) {
-      document.getElementById('scoreOutput').innerText = "Error analyzing profile score: " + error.message;
+      document.getElementById('scoreOutput').textContent = "Error analyzing profile score: " + error.message;
     }
   }
 
@@ -445,30 +447,40 @@
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const pdfText = userData.pdfText || '';
-    const jobDesc = document.getElementById('jobDescKeywords').value;
+    let pdfText = userData.pdfText || '';
+    let jobDesc = document.getElementById('jobDescKeywords').value;
     if (!jobDesc) {
       alert('Please enter a job description.');
       return;
     }
+    if (!pdfText.trim()) {
+      document.getElementById('keywordsOutput').textContent = "Error: No profile text available to analyze. Please upload a PDF with your LinkedIn profile details.";
+      return;
+    }
+    const truncatedProfile = truncateText(pdfText, MAX_TOKENS / 2);
+    const truncatedJobDesc = truncateText(jobDesc, MAX_TOKENS / 2);
+    pdfText = truncatedProfile.text;
+    jobDesc = truncatedJobDesc.text;
+    const wasTruncated = truncatedProfile.truncated || truncatedJobDesc.truncated;
     try {
-      const prompt = `Extract relevant keywords from the following job description and return them as a JSON array.\n\njob description: ${jobDesc}`;
-      const responseFormat = {
-        type: "json_object"
-      };
-      const keywords = await callGroqAPI(prompt, responseFormat);
-      if (keywords.error) {
-        document.getElementById('keywordsOutput').innerText = keywords.error;
+      const prompt = `Extract keywords from this job description and compare with the LinkedIn profile text. Return a JSON object with "keywords" (array of extracted keywords), "missingKeywords" (array of missing keywords), and "suggestions" (suggestions for incorporating missing keywords).\n\njob description: ${jobDesc}\nprofile text: ${pdfText}`;
+      const responseFormat = { type: "json_object" };
+      const result = await callGroqAPI(prompt, responseFormat);
+      if (result.error) {
+        document.getElementById('keywordsOutput').textContent = result.error;
         return;
       }
-      const keywordList = keywords.keywords || [];
-      const missingKeywords = keywordList.filter(keyword => !pdfText.toLowerCase().includes(keyword.toLowerCase()));
-      const suggestions = missingKeywords.length > 0
-        ? `Missing keywords: ${missingKeywords.join(', ')}\nConsider adding these to your profile.`
-        : `Your profile already contains most relevant keywords: ${keywordList.join(', ')}`;
-      document.getElementById('keywordsOutput').innerText = suggestions;
+      if (!result.keywords || !result.missingKeywords || !result.suggestions) {
+        document.getElementById('keywordsOutput').textContent = "Error: Invalid response format from API. Expected 'keywords', 'missingKeywords', and 'suggestions' fields.";
+        return;
+      }
+      let output = `Extracted Keywords: ${result.keywords.join(', ')}\nMissing Keywords: ${result.missingKeywords.length > 0 ? result.missingKeywords.join(', ') : 'None'}\nSuggestions:\n${result.suggestions}`;
+      if (wasTruncated) {
+        output += "\n\nNote: Input text was truncated due to API token limits. Results may be based on incomplete data.";
+      }
+      document.getElementById('keywordsOutput').textContent = output;
     } catch (error) {
-      document.getElementById('keywordsOutput').innerText = "Error optimizing keywords: " + error.message;
+      document.getElementById('keywordsOutput').textContent = "Error optimizing keywords: " + error.message;
     }
   }
 
@@ -477,20 +489,32 @@
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const pdfText = userData.pdfText || '';
+    let pdfText = userData.pdfText || '';
+    if (!pdfText.trim()) {
+      document.getElementById('headlineOutput').textContent = "Error: No profile text available to generate headlines. Please upload a PDF with your LinkedIn profile details.";
+      return;
+    }
+    const truncated = truncateText(pdfText, MAX_TOKENS);
+    pdfText = truncated.text;
     try {
-      const prompt = `Generate three optimized LinkedIn headlines based on the following profile text and return them as a JSON array.\n\nprofile text: ${pdfText}`;
-      const responseFormat = {
-        type: "json_object"
-      };
-      const headlines = await callGroqAPI(prompt, responseFormat);
-      if (headlines.error) {
-        document.getElementById('headlineOutput').innerText = headlines.error;
+      const prompt = `Generate 3 optimized LinkedIn headlines based on this profile text. Return a JSON object with "headlines" (array of 3 strings). Ensure headlines are concise and professional.\n\nprofile text: ${pdfText}`;
+      const responseFormat = { type: "json_object" };
+      const result = await callGroqAPI(prompt, responseFormat);
+      if (result.error) {
+        document.getElementById('headlineOutput').textContent = result.error;
         return;
       }
-      document.getElementById('headlineOutput').innerText = `Generated Headlines:\n${headlines.headlines.join('\n')}`;
+      if (!result.headlines || !Array.isArray(result.headlines) || result.headlines.length !== 3) {
+        document.getElementById('headlineOutput').textContent = "Error: Invalid response format from API. Expected 'headlines' field as an array of three strings.";
+        return;
+      }
+      let output = `Generated Headlines:\n${result.headlines.join('\n')}`;
+      if (truncated.truncated) {
+        output += "\n\nNote: Profile text was truncated due to API token limits. Results may be based on incomplete data.";
+      }
+      document.getElementById('headlineOutput').textContent = output;
     } catch (error) {
-      document.getElementById('headlineOutput').innerText = "Error generating headlines: " + error.message;
+      document.getElementById('headlineOutput').textContent = "Error generating headlines: " + error.message;
     }
   }
 
@@ -499,77 +523,33 @@
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const pdfText = userData.pdfText || '';
+    let pdfText = userData.pdfText || '';
+    const tone = document.getElementById('aboutTone').value;
+    if (!pdfText.trim()) {
+      document.getElementById('aboutOutput').textContent = "Error: No profile text available to enhance. Please upload a PDF with your profile details.";
+      return;
+    }
+    const truncated = truncateText(pdfText, MAX_TOKENS);
+    pdfText = truncated.text;
     try {
-      const prompt = `Enhance the following LinkedIn profile text for the About section and return the enhanced text.\n\nprofile text: ${pdfText}`;
-      const enhancedSummary = await callGroqAPI(prompt);
-      if (enhancedSummary.error) {
-        document.getElementById('aboutOutput').innerText = enhancedSummary.error;
+      const prompt = `Enhance the About section of this LinkedIn profile text using a ${tone} tone. Return a JSON object with "enhancedText" (improved text) and "tips" (tips for further enhancement).\n\nprofile text: ${pdfText}`;
+      const responseFormat = { type: "json_object" };
+      const result = await callGroqAPI(prompt, responseFormat);
+      if (result.error) {
+        document.getElementById('aboutOutput').textContent = result.error;
         return;
       }
-      document.getElementById('aboutOutput').innerText = `Enhanced About Section:\n${enhancedSummary}`;
-    } catch (error) {
-      document.getElementById('aboutOutput').innerText = "Error enhancing About section: " + error.message;
-    }
-  }
-
-  async function syncResume() {
-    if (!userData) {
-      alert('User data not loaded. Please refresh the page.');
-      return;
-    }
-    const pdfText = userData.pdfText || '';
-    const resumeFile = document.getElementById('resumeFileSync').files[0];
-    if (!resumeFile) {
-      alert('Please upload a resume.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-      const resumeText = e.target.result;
-      try {
-        const prompt = `Optimize the following resume text and calculate ATS scores (initial and improved) using the LinkedIn profile text for enhancement. Return the result in JSON format with fields: initialAtsScore, improvedAtsScore, and optimizedResume.\n\nresume text: ${resumeText}\nLinkedIn profile text: ${pdfText}`;
-        const responseFormat = {
-          type: "json_object"
-        };
-        const result = await callGroqAPI(prompt, responseFormat);
-        if (result.error) {
-          document.getElementById('resumeOutput').innerText = result.error;
-          return;
-        }
-        document.getElementById('resumeOutput').innerText = `Initial ATS Score: ${result.initialAtsScore}%\nImproved ATS Score: ${result.improvedAtsScore}%\n\n${result.optimizedResume}`;
-        document.getElementById('downloadDocBtn').style.display = 'inline-block';
-        document.getElementById('downloadPdfBtn').style.display = 'inline-block';
-        localStorage.setItem('newResume', result.optimizedResume);
-      } catch (error) {
-        document.getElementById('resumeOutput').innerText = "Error syncing resume: " + error.message;
+      if (!result.enhancedText || !result.tips) {
+        document.getElementById('aboutOutput').textContent = "Error: Invalid response format from API. Expected 'enhancedText' and 'tips' fields.";
+        return;
       }
-    };
-    reader.readAsText(resumeFile);
-  }
-
-  function downloadResume(format) {
-    const resumeContent = localStorage.getItem('newResume');
-    if (!resumeContent) {
-      alert('No resume content available for download.');
-      return;
-    }
-
-    if (format === 'doc') {
-      const blob = new Blob([resumeContent], { type: 'application/msword' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'optimized_resume.doc';
-      a.click();
-      URL.revokeObjectURL(url);
-    } else if (format === 'pdf') {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.setFontSize(12);
-      doc.text(resumeContent, 10, 10);
-      doc.save('optimized_resume.pdf');
+      let output = `Enhanced About Section (${tone} tone):\n${result.enhancedText}\n\nTips for Further Improvement:\n${result.tips}`;
+      if (truncated.truncated) {
+        output += "\n\nNote: Profile text was truncated due to API token limits. Results may be based on incomplete data.";
+      }
+      document.getElementById('aboutOutput').textContent = output;
+    } catch (error) {
+      document.getElementById('aboutOutput').textContent = "Error enhancing About section: " + error.message;
     }
   }
 
@@ -578,25 +558,37 @@
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const pdfText = userData.pdfText || '';
+    let pdfText = userData.pdfText || '';
     const targetRole = document.getElementById('targetRole').value;
     if (!targetRole) {
       alert('Please enter a target role.');
       return;
     }
+    if (!pdfText.trim()) {
+      document.getElementById('skillGapOutput').textContent = "Error: No profile text available to analyze. Please upload a PDF with your LinkedIn profile details.";
+      return;
+    }
+    const truncated = truncateText(pdfText, MAX_TOKENS);
+    pdfText = truncated.text;
     try {
-      const prompt = `Analyze the skill gap for the target role using the following profile text. Return the result in JSON format with fields: presentSkills, missingSkills, and suggestions.\n\ntarget role: ${targetRole}\nprofile text: ${pdfText}`;
-      const responseFormat = {
-        type: "json_object"
-      };
+      const prompt = `Analyze the skill gap for the target role using this LinkedIn profile text. Return a JSON object with "presentSkills" (array), "missingSkills" (array), "suggestions" (suggestions to bridge the gap), and "resources" (recommended learning resources).\n\ntarget role: ${targetRole}\nprofile text: ${pdfText}`;
+      const responseFormat = { type: "json_object" };
       const result = await callGroqAPI(prompt, responseFormat);
       if (result.error) {
-        document.getElementById('skillGapOutput').innerText = result.error;
+        document.getElementById('skillGapOutput').textContent = result.error;
         return;
       }
-      document.getElementById('skillGapOutput').innerText = result.suggestions;
+      if (!result.presentSkills || !result.missingSkills || !result.suggestions || !result.resources) {
+        document.getElementById('skillGapOutput').textContent = "Error: Invalid response format from API. Expected 'presentSkills', 'missingSkills', 'suggestions', and 'resources' fields.";
+        return;
+      }
+      let output = `Present Skills: ${result.presentSkills.join(', ')}\nMissing Skills: ${result.missingSkills.length > 0 ? result.missingSkills.join(', ') : 'None'}\nSuggestions:\n${result.suggestions}\nRecommended Learning Resources:\n${result.resources}`;
+      if (truncated.truncated) {
+        output += "\n\nNote: Profile text was truncated due to API token limits. Results may be based on incomplete data.";
+      }
+      document.getElementById('skillGapOutput').textContent = output;
     } catch (error) {
-      document.getElementById('skillGapOutput').innerText = "Error analyzing skill gap: " + error.message;
+      document.getElementById('skillGapOutput').textContent = "Error analyzing skill gap: " + error.message;
     }
   }
 
@@ -605,23 +597,40 @@
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const pdfText = userData.pdfText || '';
+    let pdfText = userData.pdfText || '';
     const recipient = document.getElementById('recipient').value;
+    const companyName = document.getElementById('companyName').value;
     const tone = document.getElementById('tone').value;
+    const messageType = document.getElementById('messageType').value;
     if (!recipient) {
       alert('Please enter a recipient name.');
       return;
     }
+    if (!pdfText.trim()) {
+      document.getElementById('coverLetterOutput').textContent = "Error: No profile text available to generate content. Please upload a PDF with your LinkedIn profile details.";
+      return;
+    }
+    const truncated = truncateText(pdfText, MAX_TOKENS);
+    pdfText = truncated.text;
     try {
-      const prompt = `Generate a cover letter or DM with the specified tone using the following profile text. Return the content as plain text.\n\nrecipient: ${recipient}\ntone: ${tone}\nprofile text: ${pdfText}`;
-      const content = await callGroqAPI(prompt);
-      if (content.error) {
-        document.getElementById('coverLetterOutput').innerText = content.error;
+      const prompt = `Generate a ${messageType === 'coverLetter' ? 'cover letter' : 'cold DM'} for ${recipient}${companyName ? ` at ${companyName}` : ''} using a ${tone} tone and this LinkedIn profile text. Return a JSON object with "content" (generated text) and "tips" (improvement tips).\n\nprofile text: ${pdfText}`;
+      const responseFormat = { type: "json_object" };
+      const result = await callGroqAPI(prompt, responseFormat);
+      if (result.error) {
+        document.getElementById('coverLetterOutput').textContent = result.error;
         return;
       }
-      document.getElementById('coverLetterOutput').innerText = content;
+      if (!result.content || !result.tips) {
+        document.getElementById('coverLetterOutput').textContent = "Error: Invalid response format from API. Expected 'content' and 'tips' fields.";
+        return;
+      }
+      let output = `Generated ${messageType === 'coverLetter' ? 'Cover Letter' : 'Cold DM'}:\n${result.content}\n\nTips for Improvement:\n${result.tips}`;
+      if (truncated.truncated) {
+        output += "\n\nNote: Profile text was truncated due to API token limits. Results may be based on incomplete data.";
+      }
+      document.getElementById('coverLetterOutput').textContent = output;
     } catch (error) {
-      document.getElementById('coverLetterOutput').innerText = "Error generating cover letter: " + error.message;
+      document.getElementById('coverLetterOutput').textContent = "Error generating content: " + error.message;
     }
   }
 
@@ -630,39 +639,40 @@
       alert('User data not loaded. Please refresh the page.');
       return;
     }
-    const pdfText = userData.pdfText || '';
-    const jobDesc = document.getElementById('jobDescMatch').value;
+    let pdfText = userData.pdfText || '';
+    let jobDesc = document.getElementById('jobDescMatch').value;
     if (!jobDesc) {
       alert('Please enter a job description.');
       return;
     }
+    if (!pdfText.trim()) {
+      document.getElementById('jobMatchOutput').textContent = "Error: No profile text available to analyze. Please upload a PDF with your LinkedIn profile details.";
+      return;
+    }
+    const truncatedProfile = truncateText(pdfText, MAX_TOKENS / 2);
+    const truncatedJobDesc = truncateText(jobDesc, MAX_TOKENS / 2);
+    pdfText = truncatedProfile.text;
+    jobDesc = truncatedJobDesc.text;
+    const wasTruncated = truncatedProfile.truncated || truncatedJobDesc.truncated;
     try {
-      const prompt = `Analyze how well the profile matches the job description and provide a match score (0-100) with details. Return the result in JSON format with fields: totalScore, skillMatchScore, experienceMatchScore, and suggestions.\n\njob description: ${jobDesc}\nprofile text: ${pdfText}`;
-      const responseFormat = {
-        type: "json_object"
-      };
+      const prompt = `Analyze how well this LinkedIn profile matches the job description. Return a JSON object with "totalScore" (0-100), "skillMatchScore" (0-100), "experienceMatchScore" (0-100), "gaps" (gaps in profile), and "actionPlan" (plan to improve match).\n\njob description: ${jobDesc}\nprofile text: ${pdfText}`;
+      const responseFormat = { type: "json_object" };
       const result = await callGroqAPI(prompt, responseFormat);
       if (result.error) {
-        document.getElementById('jobMatchOutput').innerText = result.error;
+        document.getElementById('jobMatchOutput').textContent = result.error;
         return;
       }
-      document.getElementById('jobMatchOutput').innerText = `Job Match Score: ${result.totalScore}%\nSkills Match: ${result.skillMatchScore}%\nExperience Match: ${result.experienceMatchScore}%\n${result.suggestions}`;
-    } catch (error) {
-      document.getElementById('jobMatchOutput').innerText = "Error analyzing job match: " + error.message;
-    }
-  }
-
-  async function explainFastLanguageModels() {
-    try {
-      const prompt = "Explain the importance of fast language models";
-      const explanation = await callGroqAPI(prompt);
-      if (explanation.error) {
-        document.getElementById('fastModelOutput').innerText = explanation.error;
+      if (!result.totalScore || !result.skillMatchScore || !result.experienceMatchScore || !result.gaps || !result.actionPlan) {
+        document.getElementById('jobMatchOutput').textContent = "Error: Invalid response format from API. Expected 'totalScore', 'skillMatchScore', 'experienceMatchScore', 'gaps', and 'actionPlan' fields.";
         return;
       }
-      document.getElementById('fastModelOutput').innerText = explanation;
+      let output = `Overall Job Match Score: ${result.totalScore}%\nSkills Match: ${result.skillMatchScore}%\nExperience Match: ${result.experienceMatchScore}%\nGaps Identified:\n${result.gaps}\nAction Plan to Improve Match:\n${result.actionPlan}`;
+      if (wasTruncated) {
+        output += "\n\nNote: Input text was truncated due to API token limits. Results may be based on incomplete data.";
+      }
+      document.getElementById('jobMatchOutput').textContent = output;
     } catch (error) {
-      document.getElementById('fastModelOutput').innerText = "Error fetching explanation: " + error.message;
+      document.getElementById('jobMatchOutput').textContent = "Error analyzing job match: " + error.message;
     }
   }
 
@@ -671,6 +681,5 @@
     showFeature(1);
   };
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
